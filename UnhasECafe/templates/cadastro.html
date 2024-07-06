@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro</title>
+    <!-- Inclua o CSS do Bootstrap -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Inclua o seu arquivo CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% with mensagens = get_flashed_messages(with_categories=True) %}
+        {% if mensagens %}
+            {% for categoria, mensagem in mensagens%}
+    <div class="alert {{ categoria }}">
+        {{ mensagem }}
+    </div>    
+            {%endfor%}
+        {%endif%}
+    {%endwith%}
+    </div>
+<section class="h-100 gradient-form" style="background-color: #eee;">
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col-xl-10">
+        <div class="card rounded-3 text-black">
+          <div class="row g-0">
+            <div class="col-lg-6">
+              <div class="card-body p-md-5 mx-md-4">
+
+                <div class="text-center">
+                  <img src="{{ url_for('static', filename='imagens/logo.png') }}"
+                    style="width: 185px;" alt="logo">
+                  <h4 class="mt-1 mb-3 pb-1">Joci Oliveira Esmalteria</h4>
+                </div>
+
+                <form method="POST" action="{{ url_for('cadastro') }}">
+                    {{ form.csrf_token }}
+                  <p>Crie sua conta</p>
+
+                  <div class="form-outline mb-2">
+                    {{ form.username(class="form-control", placeholder="Nome") }}
+                 
+                  </div>
+
+                  <div class="form-outline mb-2">
+                    {{ form.email(class="form-control", placeholder="E-mail") }}
+                  </div>
+
+                  <div class="form-outline mb-2">
+                    
+                    {{ form.telefone(class="form-control", placeholder="Telefone") }}
+                
+                  </div>
+
+                  <div class="form-outline mb-2">
+                    
+                    {{ form.senha(class="form-control", placeholder="Senha") }}
+            
+                  </div>
+
+                  <div class="form-outline mb-4">
+                   
+                    {{ form.confirmacao_senha(class="form-control", placeholder="Confirme a senha") }}
+                  </div>
+
+                  <div class="text-center pt-1 mb-5 pb-1">
+                    {{ form.botao_submit_criarconta(class="btn btn-primary btn-block fa-lg gradient-custom-2 mb-3") }}
+                    <a class="text-muted" href="{{ url_for('login') }}">Já possui uma conta? Faça login</a>
+                  </div>
+
+                </form>
+
+              </div>
+            </div>
+            <div class="col-lg-6 d-flex align-items-center gradient-custom-2">
+              <div class="text-white px-3 py-4 p-md-5 mx-md-4">
+                <h4 class="mb-4">Bem-vinda!</h4>
+                <p class="small mb-0">Eu adoraria te conhecer melhor! Faça seu registro para poder aproveitar todas as funcionalidades da nossa aplicação!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Inclua os scripts do Bootstrap -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
