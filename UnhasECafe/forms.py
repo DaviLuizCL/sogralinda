@@ -24,25 +24,41 @@ class FormCriarConta(FlaskForm):
             raise ValidationError('Numero já cadastrado. Cadastre outro Numero de telefone ou faça login para continuar')
         
 class FormLogin(FlaskForm):
-    user = StringField('E-mail ou Número de telefone', validators=[DataRequired(), Email()])
+    user = StringField('E-mail ou Número de telefone', validators=[DataRequired()])
     senha = PasswordField('Senha', validators=[DataRequired(), Length(6, 20)])
     botao_submit_login = SubmitField('Fazer Login')
 
-    def validate_user(self, user):
-        if not self.is_email(user.data) and not self.is_valid_phone(user.data):
-            raise ValidationError('Seu usuário deve ser um email ou um número de telefone válido.')
+    # def validate_user(self, user):
+    #     try:
+    #         if not self.is_email(user.data) and not self.is_valid_phone(user.data):
+    #             raise ValidationError('Seu usuário deve ser um email ou um número de telefone válido.')
+    #     except Exception as e:
+    #         raise ValidationError('N entendi oq houve mas to averiguando')
+    # def is_email(self, value):
+    #     try:
+    #         Email().validate_email(value)
+    #         return True
+    #     except ValidationError:
+    #         return False
         
-    def is_email(self, value):
-        try:
-            Email().validate_email(value)
-            return True
-        except ValidationError:
-            return False
+    # def is_valid_phone(self, value):
+    #     try:
+    #         p = phonenumbers.parse(value)
+    #         return phonenumbers.is_valid_number(p)
+    #     except phonenumbers.phonenumberutil.NumberParseException:
+    #         return False
         
-    def is_valid_phone(self, value):
-        try:
-            p = phonenumbers.parse(value)
-            return phonenumbers.is_valid_number(p)
-        except phonenumbers.phonenumberutil.NumberParseException:
-            return False
-        
+class FormCliente(FlaskForm):
+    nome = StringField('Digite seu nome', validators=[DataRequired()])
+    botao_nome = SubmitField('Enviar')
+
+
+class FormUnha(FlaskForm):
+    
+
+
+# class Unha(database.Model):
+    # foto = database.Column(database.String, nullable=False)
+    # cores = database.Column(database.String, nullable=False)
+    # estilo = database.Column(database.String, nullable=False)
+    # modelo = database.Column(database.String, nullable=False)

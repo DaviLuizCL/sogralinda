@@ -39,19 +39,36 @@
                 <form method="POST" action="{{ url_for('cadastro') }}">
                     {{ form.csrf_token }}
                   <p>Crie sua conta</p>
-
+                  
                   <div class="form-outline mb-2">
                     {{ form.username(class="form-control", placeholder="Nome") }}
-                 
                   </div>
 
                   <div class="form-outline mb-2">
+                    {% if form.email.errors %}
+                    {{ form.email(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                      {% for erro in form.email.errors %}
+                      {{ erro }}
+                      {%endfor%}
+                    </div>
+                    {% else %}
                     {{ form.email(class="form-control", placeholder="E-mail") }}
+                    {%endif%}
                   </div>
 
                   <div class="form-outline mb-2">
                     
+                    {% if form.telefone.errors %}
+                    {{ form.telefone(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                      {% for erro in form.telefone.errors %}
+                      {{ erro }}
+                      {%endfor%}
+                    </div>
+                    {% else %}
                     {{ form.telefone(class="form-control", placeholder="Telefone") }}
+                    {%endif%}
                 
                   </div>
 
