@@ -14,18 +14,15 @@ class Usuario(database.Model, UserMixin):
     email = database.Column(database.String, nullable=False, unique=True)
     telefone = database.Column(database.String, nullable=False, unique=True)
     senha = database.Column(database.String, nullable=False)
+    unha = database.relationship('Unha', backref='manicure', lazy=True)
 
-# class SuperUsuario(database.Model, UserMixin):
-#     id = database.Column(database.Integer, primary_key=True) 
-#     username = database.Column(database.String, nullable=False)
-#     email = database.Column(database.String, nullable=False, unique=True)
-#     telefone = database.Column(database.String, nullable=False, unique=True)
-#     senha = database.Column(database.String, nullable=False)
-#     posts = database.relationship('Post', backref='autor', lazy=True)
-     
-class Unha(database.Model):
+class Unha(database.Model, UserMixin):
+    id = database.Column(database.Integer, primary_key=True) 
     foto = database.Column(database.String, nullable=False)
-    cores = database.Column(database.String, nullable=False)
-    estilo = database.Column(database.String, nullable=False)
+    tipo = database.Column(database.String, nullable=False)
     modelo = database.Column(database.String, nullable=False)
+    cor_dominante = database.Column(database.String, nullable=False)
+    cor_secundaria = database.Column(database.String, nullable=False)
     descricao = database.Column(database.String, nullable=False)
+    id_usuario = database.Column(database.Integer, database.ForeignKey('usuario.id'), nullable=False)
+

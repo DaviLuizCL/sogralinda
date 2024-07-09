@@ -3,9 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>unhas</title>
 </head>
 <body>
     <h1>eae meu brother {{ nome }}</h1>
+    {% for unha in unhas %}
+    <h2>{{ unha.modelo }}</h2>
+    <h2>{{ unha.tipo }}</h2>
+    <h2>{{ unha.foto }}</h2>
+    <img src="{{ unha.foto }}" alt="tenando">
+    <h2>{{ unha.cor_dominante}}</h2>
+    <hr>
+    {%endfor%}
 </body>
 </html>

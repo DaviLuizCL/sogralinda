@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, DateField
+from wtforms import StringField, PasswordField, SubmitField, FileField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
+from wtforms.widgets import TextArea
 import phonenumbers
 from datetime import datetime
 from UnhasECafe.models import Usuario
@@ -53,12 +54,16 @@ class FormCliente(FlaskForm):
     botao_nome = SubmitField('Enviar')
 
 
+
 class FormUnha(FlaskForm):
+    foto = FileField('Foto da unha', validators=[DataRequired()])
+    tipo = StringField('Tipo de unha', validators=[DataRequired()])
+    modelo = StringField('Modelo da unha', validators=[DataRequired()])
+    cor_dominante = StringField('Cor predominante', validators=[DataRequired()])
+    cor_secundaria = StringField('Cor secundária', validators=[DataRequired()])
+    descricao = StringField('Descrição da unha', widget=TextArea(), validators=[DataRequired()])
+    botao_enviar_unha = SubmitField('Enviar')
+
     
-
-
-# class Unha(database.Model):
-    # foto = database.Column(database.String, nullable=False)
-    # cores = database.Column(database.String, nullable=False)
-    # estilo = database.Column(database.String, nullable=False)
-    # modelo = database.Column(database.String, nullable=False)
+    
+    

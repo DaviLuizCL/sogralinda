@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de unhas</title>
+    <!-- Inclua o CSS do Bootstrap -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Inclua o seu arquivo CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% with mensagens = get_flashed_messages(with_categories=True) %}
+        {% if mensagens %}
+            {% for categoria, mensagem in mensagens%}
+    <div class="alert {{ categoria }}">
+        {{ mensagem }}
+    </div>    
+            {%endfor%}
+        {%endif%}
+    {%endwith%}
+    </div>
+<section class="h-100 gradient-form" style="background-color: #eee;">
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col-xl-10">
+        <div class="card rounded-3 text-black">
+          <div class="row g-0">
+            <div class="col-lg-6">
+              <div class="card-body p-md-5 mx-md-4">
+
+                <div class="text-center">
+                  <img src="{{ url_for('static', filename='imagens/logo.png') }}"
+                    style="width: 185px;" alt="logo">
+                  <h4 class="mt-1 mb-3 pb-1">Envio de unha</h4>
+                </div>
+
+                <form method="POST" action="{{ url_for('cadastro_unhas') }}">
+                    {{ form_unha.csrf_token }}
+                  
+                  <div class="form-outline mb-2">
+                    {{ form_unha.foto(class="form-control", placeholder="Nome") }}
+                  </div>
+
+                  <div class="form-outline mb-2">
+                    {% if form_unha.tipo.errors %}
+                    {{ form_unha.tipo(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                      {% for erro in form_unha.tipo.errors %}
+                      {{ erro }}
+                      {%endfor%}
+                    </div>
+                    {% else %}
+                    {{ form_unha.tipo(class="form-control", placeholder="Tipo") }}
+                    {%endif%}
+                  </div>
+
+                  <div class="form-outline mb-2">
+                    
+                    {% if form_unha.modelo.errors %}
+                    {{ form_unha.modelo(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                      {% for erro in form_unha.modelo.errors %}
+                      {{ erro }}
+                      {%endfor%}
+                    </div>
+                    {% else %}
+                    {{ form_unha.modelo(class="form-control", placeholder="modelo") }}
+                    {%endif%}
+                
+                  </div>
+
+                  <div class="form-outline mb-2">
+                    
+                    {{ form_unha.cor_dominante(class="form-control", placeholder="Cor dominante") }}
+            
+                  </div>
+                  <div class="form-outline mb-2">
+                    {{ form_unha.cor_secundaria(class="form-control", placeholder="Cor secundária") }}
+                  </div>
+                  <div class="form-outline">
+                    {{ form_unha.descricao(class="form-control", placeholder="Descrição") }}
+                  </div>
+
+                  <div class="text-center pt-1 mb-5 pb-1">
+                    {{ form_unha.botao_enviar_unha(class="btn btn-primary btn-block fa-lg gradient-custom-2 mb-3") }}
+                  </div>
+
+                </form>
+
+              </div>
+            </div>
+            <div class="col-lg-6 d-flex align-items-center gradient-custom-2">
+              <div class="text-white px-3 py-4 p-md-5 mx-md-4">
+                <h4 class="mb-4">Envio das unhas</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Inclua os scripts do Bootstrap -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
