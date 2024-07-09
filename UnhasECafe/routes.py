@@ -64,6 +64,9 @@ def unhas():
         return redirect(url_for('home'))
 
 
+
+
+
     return render_template('unhas.html', nome=nome, unhas=unhas)
 @app.route('/msg_whats/<tipo>/<modelo>/<cor_dominante>', methods=['GET'])
 def msg_whats(tipo, modelo, cor_dominante):
@@ -123,3 +126,11 @@ def cadastro_unhas():
             return redirect(url_for('cadastro_unhas'))
 
     return render_template('register_nail.html', form_unha=form_unha)
+
+
+@app.route('/sair')
+@login_required
+def sair():
+    logout_user()
+    flash(f'Logout feito com sucesso!', 'alert-success')
+    return redirect(url_for('home'))
