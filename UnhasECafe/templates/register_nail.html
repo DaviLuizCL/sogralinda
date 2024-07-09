@@ -36,11 +36,12 @@
                   <h4 class="mt-1 mb-3 pb-1">Envio de unha</h4>
                 </div>
 
-                <form method="POST" action="{{ url_for('cadastro_unhas') }}">
+                <form method="POST" action="{{ url_for('cadastro_unhas') }}" enctype="multipart/form-data">
                     {{ form_unha.csrf_token }}
                   
                   <div class="form-outline mb-2">
-                    {{ form_unha.foto(class="form-control", placeholder="Nome") }}
+                    {{ form_unha.foto.label }}
+                    {{ form_unha.foto(class="form-control-file", placeholder="Nome") }}
                   </div>
 
                   <div class="form-outline mb-2">
@@ -85,7 +86,9 @@
 
                   <div class="text-center pt-1 mb-5 pb-1">
                     {{ form_unha.botao_enviar_unha(class="btn btn-primary btn-block fa-lg gradient-custom-2 mb-3") }}
+                    <a href="{{ url_for('unhas')}}" class="btn btn-primary btn-block fa-lg gradient-custom-2 mb-3">Ver modelos</a>
                   </div>
+                  
 
                 </form>
 

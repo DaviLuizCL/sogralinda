@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, FileField
+from wtforms import StringField, PasswordField, SubmitField
+from flask_wtf.file import FileField, FileAllowed
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from wtforms.widgets import TextArea
 import phonenumbers
@@ -56,7 +57,7 @@ class FormCliente(FlaskForm):
 
 
 class FormUnha(FlaskForm):
-    foto = FileField('Foto da unha', validators=[DataRequired()])
+    foto = FileField('Foto da unha', validators=[DataRequired(), FileAllowed(['jpg', 'png', 'jpeg'])])
     tipo = StringField('Tipo de unha', validators=[DataRequired()])
     modelo = StringField('Modelo da unha', validators=[DataRequired()])
     cor_dominante = StringField('Cor predominante', validators=[DataRequired()])

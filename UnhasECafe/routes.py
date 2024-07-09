@@ -3,8 +3,11 @@ from UnhasECafe import app, database, bcrypt
 from UnhasECafe.forms import FormLogin, FormCriarConta, FormCliente, FormUnha
 from UnhasECafe.models import Usuario, Unha
 from flask_login import login_user, logout_user, current_user, login_required
-
-
+import urllib.parse
+import secrets
+import os
+import re
+from PIL import Image
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -47,18 +50,60 @@ def home():
     nome_cliente = form.nome.data
     session['nome'] = nome_cliente
     if request.method == 'POST':
+        flash(f'Sinta-se em casa {nome_cliente}, fique à vontade!', 'alert-success')
         return redirect(url_for('unhas'))
     return render_template('home.html', form=form)
 
 
-@app.route('/unhas')
+@app.route('/unhas', methods=['GET', 'POST'])
 def unhas():
     nome = session.get('nome', 'cliente')
     unhas = Unha.query.all()
     if nome == None:
         flash('Nos diga seu nome!', 'alert-info')
         return redirect(url_for('home'))
+
+
     return render_template('unhas.html', nome=nome, unhas=unhas)
+@app.route('/msg_whats/<tipo>/<modelo>/<cor_dominante>', methods=['GET'])
+def msg_whats(tipo, modelo, cor_dominante):
+    cliente = session.get('nome', 'cliente')
+    msg = f'Oi, sou a {cliente}, gostei da unha tipo {tipo}, no modelo {modelo} na cor {cor_dominante} e gostaria de fazer um orçamento!'
+    whatsapp_url = f"https://wa.me/5583998317442?text={urllib.parse.quote(msg)}"
+    return redirect(whatsapp_url)
+
+@app.route('/unhas/excluir/<id_unha>', methods=['POST'])
+def excluir_unha(id_unha):
+    unha = Unha.query.get(id_unha)
+
+    database.session.delete(unha)
+    database.session.commit()
+    flash('Unha excluída', 'alert-danger')
+    return redirect(url_for('unhas'))
+
+
+def limpar_nome_arquivo(nome):
+    # Substitui espaços e caracteres especiais por um sublinhado
+    return re.sub(r'[^a-zA-Z0-9_-]', '_', nome)
+
+def salvar_imagem(imagem):
+    codigo = secrets.token_hex(8)
+    nome, extensao = os.path.splitext(imagem.filename)
+    nome_limpo = limpar_nome_arquivo(nome)
+    nome_completo = nome_limpo + codigo + extensao
+    caminho_completo = os.path.join(app.root_path, 'static/imagens', nome_completo)
+    
+    tamanho = (500, 500)
+    imagem_reduzida = Image.open(imagem)
+    imagem_reduzida.thumbnail(tamanho)
+    
+    imagem_reduzida.save(caminho_completo)
+    
+    # Mensagens de depuração
+    print(f'Imagem salva em: {caminho_completo}')
+    print(f'Nome completo da imagem: {nome_completo}')
+    
+    return nome_completo
 
 
 
@@ -67,12 +112,14 @@ def unhas():
 def cadastro_unhas():
     form_unha = FormUnha()
     if request.method == 'POST':
-            unha = Unha(foto=form_unha.foto.data,tipo=form_unha.tipo.data,modelo=form_unha.modelo.data,cor_dominante=form_unha.cor_dominante.data,cor_secundaria=form_unha.cor_secundaria.data,descricao=form_unha.descricao.data,manicure=current_user)
+            if form_unha.foto.data:
+                foto_unha = salvar_imagem(form_unha.foto.data)
+            unha = Unha(foto=foto_unha,tipo=form_unha.tipo.data,modelo=form_unha.modelo.data,cor_dominante=form_unha.cor_dominante.data,cor_secundaria=form_unha.cor_secundaria.data,descricao=form_unha.descricao.data,manicure=current_user)
             database.session.add(unha)
             database.session.commit()
             print('Alteração no banco de dados')
             flash(f'Unha adicionada com sucesso', 'alert-success')
             print('Unha criado')
-            return redirect(url_for('unhas'))
+            return redirect(url_for('cadastro_unhas'))
 
     return render_template('register_nail.html', form_unha=form_unha)
