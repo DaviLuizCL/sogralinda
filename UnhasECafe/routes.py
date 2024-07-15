@@ -1,13 +1,38 @@
 from flask import render_template, url_for, redirect, flash, request, session
-from UnhasECafe import app, database, bcrypt
+from UnhasECafe import app, database, bcrypt, mail
 from UnhasECafe.forms import FormLogin, FormCriarConta, FormCliente, FormUnha
 from UnhasECafe.models import Usuario, Unha
+from UnhasECafe.decorators import check_is_confirmed
 from flask_login import login_user, logout_user, current_user, login_required
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Message
+from datetime import datetime
 import urllib.parse
 import secrets
 import os
 import re
 from PIL import Image
+
+def generate_token(email):
+    serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+    return serializer.dumps(email, salt=app.config["SECURITY_PASSWORD_SALT"])
+
+def confirm_token(token, expiration=3600):
+    serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+    try:
+        email = serializer.loads(token, salt=app.config["SECURITY_PASSWORD_SALT"], max_age=expiration)
+        return email
+    except Exception:
+        return False
+
+def send_email(to, subject, template):
+    msg = Message(
+        subject,
+        recipients=[to],
+        html=template,
+        sender=app.config["MAIL_DEFAULT_SENDER"],
+    )
+    mail.send(msg)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -28,6 +53,7 @@ def login():
                 flash('Usuário ou senha incorretos', 'danger')
                 return redirect(url_for('login'))
     return render_template('login.html', form=form)
+
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
     form = FormCriarConta()
@@ -35,14 +61,40 @@ def cadastro():
         if form.validate_on_submit() and 'botao_submit_criarconta' in request.form:
             senha_cript = bcrypt.generate_password_hash(form.senha.data)
             #username, nome, email, telefone, senha
-            usuario = Usuario(username=form.username.data,email=form.email.data,senha=senha_cript, telefone=form.telefone.data, nome=form.username.data)
+            usuario = Usuario(username=form.username.data, email=form.email.data, senha=senha_cript, telefone=form.telefone.data, nome=form.username.data)
             database.session.add(usuario)
             database.session.commit()
             print('Alteração no banco de dados')
             flash(f'Conta criada com sucesso, {form.username.data}, obrigado!', 'alert-success')
             print('usuario criado')
+
+            token = generate_token(usuario.email)
+            confirmar_email = url_for('confirm_email', token=token, _external=True)
+            html = render_template("confirm_email.html", confirm_url=confirmar_email)
+            subject = "Por favor, confirme seu e-mail"
+            send_email(usuario.email, subject, html)
+            login_user(usuario)
+            flash("O e-mail de confirmação foi enviado", "success")
             return redirect(url_for('login'))
     return render_template('cadastro.html', form=form)
+
+@app.route('/confirm/<token>')
+@login_required
+def confirm_email(token):
+    if current_user.confirmado:
+        flash("Conta já autorizada.", "success")
+        return redirect(url_for("home"))
+    email = confirm_token(token)
+    user = Usuario.query.filter_by(email=current_user.email).first_or_404()
+    if user.email == email:
+        user.confirmado = True
+        user.confirmed_em = datetime.now()
+        database.session.add(user)
+        database.session.commit()
+        flash("Obrigado por autorizar sua conta!", "success")
+    else:
+        flash("O token de confirmação é inválido ou expirou, tente novamente", "danger")
+    return redirect(url_for("home"))
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -54,20 +106,16 @@ def home():
         return redirect(url_for('unhas'))
     return render_template('home.html', form=form)
 
-
 @app.route('/unhas', methods=['GET', 'POST'])
 def unhas():
     nome = session.get('nome', 'cliente')
     unhas = Unha.query.all()
-    if nome == None:
+    if nome is None:
         flash('Nos diga seu nome!', 'alert-info')
         return redirect(url_for('home'))
 
-
-
-
-
     return render_template('unhas.html', nome=nome, unhas=unhas)
+
 @app.route('/msg_whats/<tipo>/<modelo>/<cor_dominante>', methods=['GET'])
 def msg_whats(tipo, modelo, cor_dominante):
     cliente = session.get('nome', 'cliente')
@@ -78,15 +126,12 @@ def msg_whats(tipo, modelo, cor_dominante):
 @app.route('/unhas/excluir/<id_unha>', methods=['POST'])
 def excluir_unha(id_unha):
     unha = Unha.query.get(id_unha)
-
     database.session.delete(unha)
     database.session.commit()
     flash('Unha excluída', 'alert-danger')
     return redirect(url_for('unhas'))
 
-
 def limpar_nome_arquivo(nome):
-    # Substitui espaços e caracteres especiais por um sublinhado
     return re.sub(r'[^a-zA-Z0-9_-]', '_', nome)
 
 def salvar_imagem(imagem):
@@ -108,25 +153,22 @@ def salvar_imagem(imagem):
     
     return nome_completo
 
-
-
 @app.route('/register_nail', methods=['GET', 'POST'])
 @login_required
 def cadastro_unhas():
     form_unha = FormUnha()
     if request.method == 'POST':
-            if form_unha.foto.data:
-                foto_unha = salvar_imagem(form_unha.foto.data)
-            unha = Unha(foto=foto_unha,tipo=form_unha.tipo.data,modelo=form_unha.modelo.data,cor_dominante=form_unha.cor_dominante.data,cor_secundaria=form_unha.cor_secundaria.data,descricao=form_unha.descricao.data,manicure=current_user)
-            database.session.add(unha)
-            database.session.commit()
-            print('Alteração no banco de dados')
-            flash(f'Unha adicionada com sucesso', 'alert-success')
-            print('Unha criado')
-            return redirect(url_for('cadastro_unhas'))
+        if form_unha.foto.data:
+            foto_unha = salvar_imagem(form_unha.foto.data)
+        unha = Unha(foto=foto_unha, tipo=form_unha.tipo.data, modelo=form_unha.modelo.data, cor_dominante=form_unha.cor_dominante.data, cor_secundaria=form_unha.cor_secundaria.data, descricao=form_unha.descricao.data, manicure=current_user)
+        database.session.add(unha)
+        database.session.commit()
+        print('Alteração no banco de dados')
+        flash(f'Unha adicionada com sucesso', 'alert-success')
+        print('Unha criada')
+        return redirect(url_for('cadastro_unhas'))
 
     return render_template('register_nail.html', form_unha=form_unha)
-
 
 @app.route('/sair')
 @login_required

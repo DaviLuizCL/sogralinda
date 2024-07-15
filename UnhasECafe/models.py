@@ -14,6 +14,8 @@ class Usuario(database.Model, UserMixin):
     email = database.Column(database.String, nullable=False, unique=True)
     telefone = database.Column(database.String, nullable=False, unique=True)
     senha = database.Column(database.String, nullable=False)
+    confirmado = database.Column(database.Boolean, nullable=False, default=False)
+    confirmado_em = database.Column(database.DateTime, nullable=True)
     unha = database.relationship('Unha', backref='manicure', lazy=True)
 
 class Unha(database.Model, UserMixin):
