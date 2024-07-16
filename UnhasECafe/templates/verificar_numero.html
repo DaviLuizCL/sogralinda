@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação de Código</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .input-group {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .input-group input {
+            width: 2.5rem;
+            height: 3rem;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        .flash-messages {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="flash-messages">
+        {% with mensagens = get_flashed_messages(with_categories=True) %}
+        {% if mensagens %}
+            {% for categoria, mensagem in mensagens %}
+                <div class="alert {{ categoria }}">
+                    {{ mensagem }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    <div class="card p-4 gradient-custom-2">
+        <h3 class="text-center mb-4">Insira o código de verificação</h3>
+        <h6>Será enviado um código para o número cadastrado</h6>
+        <a href="#">Não recebi meu código</a>
+        <form id="form" method="POST">
+            {{ form.numero_digitado }}
+            <div class="text-center mt-4">
+                {{ form.botao_verificar(class="btn btn-primary btn-block fa-lg gradient-custom-2 mb-3") }}
+            </div>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const inputs = document.querySelectorAll('.input-group input');
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', () => {
+                    if (input.value.length === 1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

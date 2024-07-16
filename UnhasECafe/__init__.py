@@ -3,7 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
-from flask_mail import Mail, Message
 import os
 secret_key = os.getenv('SECRET_KEY')
 if secret_key is None:
@@ -20,6 +19,8 @@ if email_pass is None:
 email = os.getenv('EMAIL')
 if email_pass is None:
     raise ValueError("Problemas com a variável de ambiente - EMAIL")
+auth_token_twilio = os.getenv('AUTH_TOKEN_TWILIO')
+account_sid_twilio = os.getenv('ACCOUNT_SID_TWILIO')
 
 app = Flask(__name__)
 
@@ -27,19 +28,9 @@ app.config['SECRET_KEY'] = secret_key
 app.config['SECURITY_PASSWORD_SALT'] = salt_email
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sogrilda.db'
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = email
-app.config['MAIL_PASSWORD'] = email_pass
-
-app.config['MAIL_DEFAULT_SENDER'] = email
-
 database = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
-mail = Mail(app)
 
 login_manager.login_view = 'login'
 login_manager.login_message = 'Por favor, faça Login para acessar a página'

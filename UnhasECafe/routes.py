@@ -1,11 +1,11 @@
 from flask import render_template, url_for, redirect, flash, request, session
-from UnhasECafe import app, database, bcrypt, mail
-from UnhasECafe.forms import FormLogin, FormCriarConta, FormCliente, FormUnha
+from UnhasECafe import app, database, bcrypt
+from UnhasECafe.forms import FormLogin, FormCriarConta, FormCliente, FormUnha, FormConfirmarNumero
 from UnhasECafe.models import Usuario, Unha
-from UnhasECafe.decorators import check_is_confirmed
+from UnhasECafe.scripts import enviar_mensagem, cadastrar_usuario
 from flask_login import login_user, logout_user, current_user, login_required
 from itsdangerous import URLSafeTimedSerializer
-from flask_mail import Message
+import random
 from datetime import datetime
 import urllib.parse
 import secrets
@@ -13,26 +13,30 @@ import os
 import re
 from PIL import Image
 
-def generate_token(email):
-    serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
-    return serializer.dumps(email, salt=app.config["SECURITY_PASSWORD_SALT"])
+def generate_token():
+    token = str(random.randint(10000, 99999))
+    return token
 
 def confirm_token(token, expiration=3600):
     serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
     try:
-        email = serializer.loads(token, salt=app.config["SECURITY_PASSWORD_SALT"], max_age=expiration)
-        return email
+        telefone = serializer.loads(token, salt=app.config["SECURITY_PASSWORD_SALT"], max_age=expiration)
+        return telefone
     except Exception:
         return False
 
-def send_email(to, subject, template):
-    msg = Message(
-        subject,
-        recipients=[to],
-        html=template,
-        sender=app.config["MAIL_DEFAULT_SENDER"],
-    )
-    mail.send(msg)
+@app.route('/verificar_numero/<token>/<usuario>', methods=['GET', 'POST'])
+def verificar_numero(token: str, usuario: Usuario):
+    form = FormConfirmarNumero()
+    if request.method == 'POST':
+        if form.numero_digitado.data == token:
+            flash('Numero verificado com sucesso! Obrigado!')
+            cadastrar_usuario(usuario)
+            flash('Faça seu login para acessar a área desejada')
+            return redirect(url_for('login'))
+        else:
+            flash('Token errado ou expirado, por favor, tente novamente')
+    return render_template('verificar_numero.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -59,42 +63,15 @@ def cadastro():
     form = FormCriarConta()
     if request.method == 'POST':
         if form.validate_on_submit() and 'botao_submit_criarconta' in request.form:
-            senha_cript = bcrypt.generate_password_hash(form.senha.data)
+            token = generate_token()
+            enviar_mensagem(codigo=token, para=form.telefone.data)
+            usuario = Usuario (username=form.username.data, 
+                              email=form.email.data,
+                              telefone=form.telefone.data,
+                              senha=form.senha.data)
+            return redirect(url_for('verificar_numero', token=token, usuario=usuario))
             #username, nome, email, telefone, senha
-            usuario = Usuario(username=form.username.data, email=form.email.data, senha=senha_cript, telefone=form.telefone.data, nome=form.username.data)
-            database.session.add(usuario)
-            database.session.commit()
-            print('Alteração no banco de dados')
-            flash(f'Conta criada com sucesso, {form.username.data}, obrigado!', 'alert-success')
-            print('usuario criado')
-
-            token = generate_token(usuario.email)
-            confirmar_email = url_for('confirm_email', token=token, _external=True)
-            html = render_template("confirm_email.html", confirm_url=confirmar_email)
-            subject = "Por favor, confirme seu e-mail"
-            send_email(usuario.email, subject, html)
-            login_user(usuario)
-            flash("O e-mail de confirmação foi enviado", "success")
-            return redirect(url_for('login'))
     return render_template('cadastro.html', form=form)
-
-@app.route('/confirm/<token>')
-@login_required
-def confirm_email(token):
-    if current_user.confirmado:
-        flash("Conta já autorizada.", "success")
-        return redirect(url_for("home"))
-    email = confirm_token(token)
-    user = Usuario.query.filter_by(email=current_user.email).first_or_404()
-    if user.email == email:
-        user.confirmado = True
-        user.confirmed_em = datetime.now()
-        database.session.add(user)
-        database.session.commit()
-        flash("Obrigado por autorizar sua conta!", "success")
-    else:
-        flash("O token de confirmação é inválido ou expirou, tente novamente", "danger")
-    return redirect(url_for("home"))
 
 @app.route('/', methods=['GET', 'POST'])
 def home():

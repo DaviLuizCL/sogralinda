@@ -65,6 +65,11 @@ class FormUnha(FlaskForm):
     descricao = StringField('Descrição da unha', widget=TextArea(), validators=[DataRequired()])
     botao_enviar_unha = SubmitField('Enviar')
 
+
+class FormConfirmarNumero(FlaskForm):
+    numero_digitado = StringField('Número recebido', validators=[DataRequired(),Length(5, 5) ])
+    botao_verificar = SubmitField('Verificar')
+
     
     
     
