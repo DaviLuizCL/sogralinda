@@ -25,10 +25,11 @@ def confirm_token(token, expiration=3600):
     except Exception:
         return False
 
-@app.route('/verificar_numero/<token>', methods=['GET', 'POST'])
-def verificar_numero(token: str):
+@app.route('/verificar_numero', methods=['GET', 'POST'])
+def verificar_numero():
     form_confirmar = FormConfirmarNumero()
     if request.method == 'POST':
+        token = session.get('token')
         if form_confirmar.numero_digitado.data == token:
             # Recuperar dados do formulário da sessão
             form_data = session.get('form_data')
@@ -37,9 +38,7 @@ def verificar_numero(token: str):
                 senha_cript = bcrypt.generate_password_hash(form_data['senha'])
                 usuario = Usuario(
                     username=form_data['username'],
-                    nome = form_data['username'],
                     email=form_data['email'],
-                    confirmado_em = date.today(),
                     senha=senha_cript,
                     telefone=form_data['telefone'],
                     confirmado=True
@@ -48,6 +47,7 @@ def verificar_numero(token: str):
                 database.session.commit()
                 # Limpar dados da sessão após uso
                 session.pop('form_data', None)
+                session.pop('token', None)
                 flash('Faça seu login para acessar a área desejada')
                 return redirect(url_for('login'))
             else:
@@ -55,6 +55,7 @@ def verificar_numero(token: str):
         else:
             flash('Token errado ou expirado, por favor, tente novamente')
     return render_template('verificar_numero.html', form=form_confirmar)
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -86,14 +87,15 @@ def cadastro():
         if form.validate_on_submit() and 'botao_submit_criarconta' in request.form:
             token = generate_token()
             enviar_mensagem(codigo=token, para=form.telefone.data)
-            # Armazenar dados do formulário na sessão
+            # Armazenar dados do formulário e token na sessão
             session['form_data'] = {
                 'username': form.username.data,
                 'email': form.email.data,
                 'telefone': form.telefone.data,
                 'senha': form.senha.data
             }
-            return redirect(url_for('verificar_numero', token=token))
+            session['token'] = token
+            return redirect(url_for('verificar_numero'))
     return render_template('cadastro.html', form=form)
 
 
