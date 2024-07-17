@@ -6,7 +6,7 @@ from UnhasECafe.scripts import enviar_mensagem, cadastrar_usuario
 from flask_login import login_user, logout_user, current_user, login_required
 from itsdangerous import URLSafeTimedSerializer
 import random
-from datetime import datetime
+from datetime import date
 import urllib.parse
 import secrets
 import os
@@ -25,18 +25,37 @@ def confirm_token(token, expiration=3600):
     except Exception:
         return False
 
-@app.route('/verificar_numero/<token>/<usuario>', methods=['GET', 'POST'])
-def verificar_numero(token: str, usuario: Usuario):
-    form = FormConfirmarNumero()
+@app.route('/verificar_numero/<token>', methods=['GET', 'POST'])
+def verificar_numero(token: str):
+    form_confirmar = FormConfirmarNumero()
     if request.method == 'POST':
-        if form.numero_digitado.data == token:
-            flash('Numero verificado com sucesso! Obrigado!')
-            cadastrar_usuario(usuario)
-            flash('Faça seu login para acessar a área desejada')
-            return redirect(url_for('login'))
+        if form_confirmar.numero_digitado.data == token:
+            # Recuperar dados do formulário da sessão
+            form_data = session.get('form_data')
+            if form_data:
+                flash('Numero verificado com sucesso! Obrigado!')
+                senha_cript = bcrypt.generate_password_hash(form_data['senha'])
+                usuario = Usuario(
+                    username=form_data['username'],
+                    nome = form_data['username'],
+                    email=form_data['email'],
+                    confirmado_em = date.today(),
+                    senha=senha_cript,
+                    telefone=form_data['telefone'],
+                    confirmado=True
+                )
+                database.session.add(usuario)
+                database.session.commit()
+                # Limpar dados da sessão após uso
+                session.pop('form_data', None)
+                flash('Faça seu login para acessar a área desejada')
+                return redirect(url_for('login'))
+            else:
+                flash('Erro ao recuperar dados do formulário. Por favor, tente novamente.')
         else:
             flash('Token errado ou expirado, por favor, tente novamente')
-    return render_template('verificar_numero.html', form=form)
+    return render_template('verificar_numero.html', form=form_confirmar)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -58,6 +77,8 @@ def login():
                 return redirect(url_for('login'))
     return render_template('login.html', form=form)
 
+from flask import session
+
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
     form = FormCriarConta()
@@ -65,13 +86,16 @@ def cadastro():
         if form.validate_on_submit() and 'botao_submit_criarconta' in request.form:
             token = generate_token()
             enviar_mensagem(codigo=token, para=form.telefone.data)
-            usuario = Usuario (username=form.username.data, 
-                              email=form.email.data,
-                              telefone=form.telefone.data,
-                              senha=form.senha.data)
-            return redirect(url_for('verificar_numero', token=token, usuario=usuario))
-            #username, nome, email, telefone, senha
+            # Armazenar dados do formulário na sessão
+            session['form_data'] = {
+                'username': form.username.data,
+                'email': form.email.data,
+                'telefone': form.telefone.data,
+                'senha': form.senha.data
+            }
+            return redirect(url_for('verificar_numero', token=token))
     return render_template('cadastro.html', form=form)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
